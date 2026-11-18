@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#000000">
 <meta name="description" content="Akshith Anand — Cloud & DevOps Engineer. GitHub activity and contact.">
-<title>Akshith's Portfolio</title>
+<title>AKSHITH ANAND — Cloud & DevOps Engineer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Google+Sans+Flex:opsz,wght@6..144,400..900&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
@@ -66,14 +66,17 @@ a{color:inherit}
 .hero-kicker{margin:0 0 22px;font:300 11px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
 .hero-title{margin:0;color:var(--fg);font:400 clamp(52px,8vw,112px)/.9 var(--sans);letter-spacing:-.04em;text-transform:uppercase}
 .hero-role{margin:26px 0 0;color:var(--dim);font:300 clamp(15px,1.8vw,21px)/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase}
-.hero-image{width:min(100%,520px);aspect-ratio:1;justify-self:end;object-fit:cover;display:block;image-rendering:auto}
+.portrait-wrap{position:relative;display:block;width:min(100%,520px);aspect-ratio:1;justify-self:end;overflow:hidden;touch-action:pan-y}
+.hero-image{width:100%;height:100%;aspect-ratio:1;object-fit:cover;display:block;image-rendering:auto;outline:none}
+.portrait-bulge{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.portrait-wrap.bulge-ready .hero-image{visibility:hidden}
 .hero-subtext{margin:18px 0 0;font:400 clamp(13px,1.35vw,16px)/1.5 var(--lato);letter-spacing:.22em;text-transform:uppercase;color:var(--dim);opacity:0;transform:translateY(8px);animation:roleIn .9s ease .45s forwards}
 @keyframes roleIn{to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.hero-subtext{opacity:1;transform:none;animation:none}}
 @media(max-width:820px){
   .hero-inner{grid-template-columns:1fr;gap:32px}
   .hero-copy{max-width:none}
-  .hero-image{width:min(100%,460px);justify-self:center}
+  .portrait-wrap{width:min(100%,460px);justify-self:center}
   .hero-title{font-size:clamp(48px,13vw,82px)}
 }
 
@@ -113,7 +116,8 @@ a{color:inherit}
 @media(max-width:600px){
   .hero{min-height:100svh;padding:24px 0 58px;display:block}
   .hero-inner{width:100%;display:flex;flex-direction:column;align-items:center;gap:0}
-  .hero-image{order:-1;width:clamp(150px,46vw,220px);height:auto;max-width:100%;max-height:none;min-height:0;aspect-ratio:1;justify-self:center;align-self:center;margin:18px auto 0;object-fit:contain;object-position:center;}
+  .portrait-wrap{order:-1;width:clamp(150px,46vw,220px);max-width:100%;aspect-ratio:1;justify-self:center;align-self:center;margin:18px auto 0}
+  .hero-image{object-fit:contain;object-position:center}
   .hero-copy{order:0;width:100%;padding:12px 18px 0}
   .tech-text-container{height:clamp(230px,68vw,340px)}
   .hero-subtext{margin-top:12px;font-size:12px;letter-spacing:.14em}
@@ -126,18 +130,12 @@ a{color:inherit}
   .socials{gap:12px}
   .soc{width:56px;height:56px}
   .soc svg{width:23px;height:23px}
-  .foot{padding:24px 18px}
 }
 @media(hover:none) and (pointer:coarse){
   .soc:active{background:var(--fg);color:var(--bg)}
   .crow:active{color:var(--fg)}
   .tech-text{touch-action:pan-y}
 }
-
-.foot{padding:28px max(24px,6vw);border-top:1px solid var(--line);font:300 11px/1.4 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-.foot-in{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;max-width:1160px;margin:0 auto}
-.foot a{text-decoration:none;transition:color .2s}
-.foot a:hover{color:var(--fg)}
 /* ---------- React TechText ---------- */
 .tech-text-container{position:relative;width:100%;height:480px;max-width:700px}
 .tech-text{position:relative;width:100%;height:100%;touch-action:pan-y;user-select:none}
@@ -236,13 +234,7 @@ a{color:inherit}
 </section>
 </main>
 
-<footer class="foot">
-  <div class="foot-in">
-    <span>© <span id="year">2026</span> Akshith Anand</span>
-    <span>Cloud &amp; DevOps Engineer</span>
-    <a href="#home">↑ Top</a>
-  </div>
-</footer>
+
 
 <script>
 (()=>{
@@ -1598,6 +1590,123 @@ if (techRoot) {
 
   resize();
   draw(performance.now());
+})();
+</script>
+
+
+<script>
+(() => {
+  const portrait = document.querySelector('.hero-image');
+  if (!portrait || !portrait.parentNode) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'portrait-wrap';
+  portrait.parentNode.insertBefore(wrap, portrait);
+  wrap.appendChild(portrait);
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'portrait-bulge';
+  canvas.setAttribute('aria-hidden', 'true');
+  wrap.appendChild(canvas);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const source = document.createElement('canvas');
+  const sourceCtx = source.getContext('2d', { willReadFrequently: true });
+  let original, frame = 0, point = null, strength = 0, fading = false, last = 0;
+  const SIZE = 420;
+
+  function prepare() {
+    if (!portrait.complete || !portrait.naturalWidth) return;
+    source.width = source.height = SIZE;
+    canvas.width = canvas.height = SIZE;
+    sourceCtx.clearRect(0, 0, SIZE, SIZE);
+    sourceCtx.drawImage(portrait, 0, 0, SIZE, SIZE);
+    original = sourceCtx.getImageData(0, 0, SIZE, SIZE);
+    ctx.putImageData(original, 0, 0);
+    wrap.classList.add('bulge-ready');
+  }
+
+  function render() {
+    if (!original || !point) return;
+    const src = original.data;
+    const out = ctx.createImageData(SIZE, SIZE);
+    const dst = out.data;
+    // Keep the distortion tight and subtle: only a small patch of dots swells.
+    const sigma = SIZE * 0.075;
+    const maxShift = sigma * 0.20 * strength;
+    const x0 = Math.max(0, Math.floor(point.x - sigma * 2.5));
+    const x1 = Math.min(SIZE - 1, Math.ceil(point.x + sigma * 2.5));
+    const y0 = Math.max(0, Math.floor(point.y - sigma * 2.5));
+    const y1 = Math.min(SIZE - 1, Math.ceil(point.y + sigma * 2.5));
+    // Start with the untouched portrait; only the dot pattern around the pointer is warped.
+    dst.set(src);
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const dx = x - point.x, dy = y - point.y;
+        const r2 = dx * dx + dy * dy;
+        const falloff = Math.exp(-r2 / (2 * sigma * sigma));
+        const push = maxShift * falloff / sigma;
+        const sx = Math.max(0, Math.min(SIZE - 1.001, x - dx * push));
+        const sy = Math.max(0, Math.min(SIZE - 1.001, y - dy * push));
+        const ix = Math.floor(sx), iy = Math.floor(sy);
+        const fx = sx - ix, fy = sy - iy;
+        const a = (iy * SIZE + ix) * 4;
+        const b = a + 4, c = a + SIZE * 4, d = c + 4;
+        const oi = (y * SIZE + x) * 4;
+        for (let k = 0; k < 3; k++) {
+          const top = src[a+k] * (1-fx) + src[b+k] * fx;
+          const bot = src[c+k] * (1-fx) + src[d+k] * fx;
+          dst[oi+k] = top * (1-fy) + bot * fy;
+        }
+        dst[oi+3] = 255;
+      }
+    }
+    ctx.putImageData(out, 0, 0);
+  }
+
+  function animate(now) {
+    if (!fading) return;
+    const elapsed = now - last;
+    strength = Math.max(0, strength - elapsed / 720);
+    last = now;
+    render();
+    if (strength > 0.005) frame = requestAnimationFrame(animate);
+    else { fading = false; strength = 0; point = null; ctx.putImageData(original, 0, 0); }
+  }
+
+  function locate(event) {
+    const rect = wrap.getBoundingClientRect();
+    point = {
+      x: Math.max(0, Math.min(SIZE, (event.clientX - rect.left) / rect.width * SIZE)),
+      y: Math.max(0, Math.min(SIZE, (event.clientY - rect.top) / rect.height * SIZE))
+    };
+  }
+  function start(event, temporary) {
+    if (!original) prepare();
+    if (!original) return;
+    locate(event);
+    cancelAnimationFrame(frame);
+    fading = false;
+    strength = 1;
+    render();
+    if (temporary) {
+      fading = true;
+      last = performance.now();
+      frame = requestAnimationFrame(animate);
+    }
+  }
+
+  if (portrait.complete) prepare();
+  else portrait.addEventListener('load', prepare, { once: true });
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    wrap.addEventListener('pointerenter', e => start(e, false));
+    wrap.addEventListener('pointermove', e => start(e, false));
+    wrap.addEventListener('pointerleave', () => {
+      cancelAnimationFrame(frame); fading = true; last = performance.now();
+      frame = requestAnimationFrame(animate);
+    });
+  } else {
+    wrap.addEventListener('pointerdown', e => start(e, true), { passive: true });
+  }
+  window.addEventListener('resize', prepare, { passive: true });
 })();
 </script>
 
